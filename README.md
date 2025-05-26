@@ -1,3 +1,5 @@
+# ![Rocket](rocket-vecteezy.com.svg)
+
 # goto - Ultra fast directory switching for Your Shell
 
 A lightweight, intuitive directory bookmarking system for bash and zsh that helps you navigate your filesystem with ease.
@@ -7,7 +9,8 @@ A lightweight, intuitive directory bookmarking system for bash and zsh that help
 - 📌 **Named Bookmarks** - Save directories with memorable names
 - 🔢 **Quick Access** - Use numbers (1-9) or names to jump to bookmarks
 - 🚀 **Ultra-fast Navigation** - Shortcuts `g1` through `g9` for instant access
-- 📝 **Smart Tab Completion** - See all bookmarks with paths before jumping
+- 📝 **Smart Tab Completion** - **See all bookmarks with paths before jumping**
+- 🔗 **Path Variables** - Access bookmarks 1-9 via `$g1` to `$g9` variables
 - 💾 **Persistent Storage** - Bookmarks survive shell restarts
 - 🎯 **Zero Dependencies** - Pure shell script, no external tools needed
 - 📊 **Clean Formatting** - Formatted output, easy to scan
@@ -112,6 +115,11 @@ mkr 2        # Remove by number
 # If you try to bookmark the same directory twice
 mk
 Already bookmarked: 3) ~/Projects/my-awesome-project
+
+# Use bookmark paths in other commands
+echo $g1  # Prints the path of bookmark 1
+cp file.txt $g2/  # Copy file to bookmark 2
+ls -la $g3  # List contents of bookmark 3
 ```
 
 ## Why goto?

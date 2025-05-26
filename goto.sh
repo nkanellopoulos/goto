@@ -7,6 +7,27 @@ GOTO_BOOKMARKS_FILE="${HOME}/.goto_bookmarks"
 # Initialize bookmarks file if it doesn't exist
 [ ! -f "$GOTO_BOOKMARKS_FILE" ] && touch "$GOTO_BOOKMARKS_FILE"
 
+# Function to update bookmark variables
+_update_bookmark_vars() {
+    # Clear existing variables
+    for i in {1..9}; do
+        unset g$i
+    done
+    
+    # Set new variables
+    local count=1
+    while IFS='|' read -r name path && [ $count -le 9 ]; do
+        if [ -n "$path" ]; then
+            eval "g$count=\"$path\""
+            export g$count
+        fi
+        ((count++))
+    done < "$GOTO_BOOKMARKS_FILE"
+}
+
+# Update variables on sourcing
+_update_bookmark_vars
+
 # Format bookmark display line
 _format_bookmark() {
     local index="$1"
@@ -67,6 +88,9 @@ mk() {
             echo "✓ Marked '$name'"
         fi
     fi
+    
+    # Update bookmark variables
+    _update_bookmark_vars
 }
 
 gt() {
@@ -158,6 +182,9 @@ mkr() {
         \mv "$temp_file" "$GOTO_BOOKMARKS_FILE"
         echo "✓ Removed"
     fi
+    
+    # Update bookmark variables
+    _update_bookmark_vars
 }
 
 # Clear all bookmarks (shortened)
@@ -167,6 +194,8 @@ mkc() {
     if [[ "$response" =~ ^[Yy]$ ]]; then
         > "$GOTO_BOOKMARKS_FILE"
         echo "✓ Cleared"
+        # Update bookmark variables
+        _update_bookmark_vars
     else
         echo "Cancelled"
     fi
