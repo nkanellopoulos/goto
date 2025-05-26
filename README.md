@@ -1,4 +1,4 @@
-# ![Rocket](rocket-vecteezy.com.svg)
+# ![rocket](images/rocket-vecteezy.com.png)
 
 # goto - Ultra fast directory switching for Your Shell
 
