@@ -157,28 +157,31 @@ Already bookmarked: 3) ~/Projects/my-awesome-project
 4. **Shell Integration** - Add to your prompt to show current bookmark:
 
    You can either copy the function from `prompt_integration.sh` or source it directly:
-   
+
    ```bash
    # Add this to your .bashrc or .zshrc
    source ~/goto/prompt_integration.sh
    ```
 
    Then modify your prompt:
-   
+
    **For bash:**
+
    ```bash
    PS1='$(_get_bookmark_name)\u@\h:\w\$ '
    ```
-   
+
    **For zsh:**
+
    ```bash
    setopt PROMPT_SUBST
    PROMPT='$(_get_bookmark_name)%n@%m:%~%# '
    ```
-   
-   This will show `[awesome]` when you're in a named bookmark, `[*]` for unnamed bookmarks, or nothing if not bookmarked.
-   
+
+   This will show `[awesome]` when you're in a named bookmark, `[2]` for unnamed bookmarks (showing the bookmark number), or nothing if not bookmarked.
+
    **Note:** If you have an existing custom prompt, you can prepend the bookmark indicator:
+
    ```bash
    # For bash
    PS1='$(_get_bookmark_name)'$PS1
@@ -214,5 +217,6 @@ Contributions are welcome! Feel free to submit issues and enhancement requests.
 
 ## Author
 
-Created with frustration from typing long paths too many times. 🚀
+**Nikos Kanellopoulos**  
 
+Created with frustration from typing long paths too many times. 🚀
