@@ -122,6 +122,79 @@ cp file.txt $g2/  # Copy file to bookmark 2
 ls -la $g3  # List contents of bookmark 3
 ```
 
+## Tips & Tricks
+
+1. **Project Organization** - Bookmark your active projects:
+
+   ```bash
+   mk frontend
+   mk backend
+   mk docs
+   ```
+
+2. **Quick Switching** - Use `g1`, `g2`, etc. for your most-used directories
+
+3. **Temporary Bookmarks** - Use numbers for temporary bookmarks, names for permanent ones
+
+4. **Manual Organization** - You can carefully edit `~/.goto_bookmarks` to reorganize your bookmarks' order
+
+## Shell Integration
+
+You can add the current bookmark name to your shell prompt. You can either copy the function from `prompt_integration.sh` or source it directly:
+
+```bash
+# Add this to your .bashrc or .zshrc
+source ~/goto/prompt_integration.sh
+```
+
+Then modify your prompt:
+
+**For bash:**
+
+```bash
+PS1='$(_get_bookmark_name)\u@\h:\w\$ '
+```
+
+**For zsh:**
+
+```bash
+setopt PROMPT_SUBST
+PROMPT='$(_get_bookmark_name)%n@%m:%~%# '
+```
+
+This will show `[awesome]` when you're in a named bookmark, `[2]` for unnamed bookmarks (showing the bookmark number), or nothing if not bookmarked.
+
+**Note:** If you have an existing custom prompt, you can prepend the bookmark indicator:
+
+```bash
+# For bash
+PS1='$(_get_bookmark_name)'$PS1
+
+# For zsh
+PROMPT='$(_get_bookmark_name)'$PROMPT
+```
+
+## Configuration
+
+Bookmarks are stored in `~/.goto_bookmarks` as a simple text file. Format:
+
+```
+name|/full/path/to/directory
+|/path/without/name
+```
+
+## Compatibility
+
+- ✅ **bash** 4.0+
+- ✅ **zsh** 5.0+
+- ✅ **macOS** Terminal, iTerm2
+- ✅ **Linux** All distributions
+- ✅ **WSL** Windows Subsystem for Linux
+
+## License
+
+MIT License - feel free to use in personal and commercial projects.
+
 ## Why goto?
 
 ### Advantages over cd
@@ -147,77 +220,6 @@ ls -la $g3  # List contents of bookmark 3
 - **Predictable** - No surprises from frequency-based algorithms
 - **Immediate** - Works right after bookmarking, no "learning" period
 - **Transparent** - You control what's bookmarked
-
-## Tips & Tricks
-
-1. **Project Organization** - Bookmark your active projects:
-
-   ```bash
-   mk frontend
-   mk backend
-   mk docs
-   ```
-
-2. **Quick Switching** - Use `g1`, `g2`, etc. for your most-used directories
-
-3. **Temporary Bookmarks** - Use numbers for temporary bookmarks, names for permanent ones
-
-4. **Shell Integration** - Add to your prompt to show current bookmark:
-
-   You can either copy the function from `prompt_integration.sh` or source it directly:
-
-   ```bash
-   # Add this to your .bashrc or .zshrc
-   source ~/goto/prompt_integration.sh
-   ```
-
-   Then modify your prompt:
-
-   **For bash:**
-
-   ```bash
-   PS1='$(_get_bookmark_name)\u@\h:\w\$ '
-   ```
-
-   **For zsh:**
-
-   ```bash
-   setopt PROMPT_SUBST
-   PROMPT='$(_get_bookmark_name)%n@%m:%~%# '
-   ```
-
-   This will show `[awesome]` when you're in a named bookmark, `[2]` for unnamed bookmarks (showing the bookmark number), or nothing if not bookmarked.
-
-   **Note:** If you have an existing custom prompt, you can prepend the bookmark indicator:
-
-   ```bash
-   # For bash
-   PS1='$(_get_bookmark_name)'$PS1
-   
-   # For zsh
-   PROMPT='$(_get_bookmark_name)'$PROMPT
-   ```
-
-## Configuration
-
-Bookmarks are stored in `~/.goto_bookmarks` as a simple text file. Format:
-
-```
-name|/full/path/to/directory
-|/path/without/name
-```
-
-## Compatibility
-
-- ✅ **bash** 4.0+
-- ✅ **zsh** 5.0+
-- ✅ **macOS** Terminal, iTerm2
-- ✅ **Linux** All distributions
-- ✅ **WSL** Windows Subsystem for Linux
-
-## License
-
-MIT License - feel free to use in personal and commercial projects.
 
 ## Contributing
 
