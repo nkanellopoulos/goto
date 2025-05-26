@@ -1,6 +1,6 @@
-# ![rocket](images/rocket-vecteezy.com.png)
+# goto - Ultra fast directory switching
 
-# goto - Ultra fast directory switching for Your Shell
+![rocket](images/rocket-vecteezy.com.png)
 
 A lightweight, intuitive directory bookmarking system for bash and zsh that helps you navigate your filesystem with ease.
 
