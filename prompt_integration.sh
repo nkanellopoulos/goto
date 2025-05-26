@@ -12,9 +12,9 @@ _get_bookmark_name() {
     fi
     
     local line_num=0
-    while IFS='|' read -r name path; do
+    while IFS='|' read -r name bookmark_path; do
         ((line_num++))
-        if [ "$path" = "$current_dir" ]; then
+        if [ "$bookmark_path" = "$current_dir" ]; then
             if [ -n "$name" ]; then
                 echo "[$name]"
             else

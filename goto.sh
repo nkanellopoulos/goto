@@ -16,9 +16,9 @@ _update_bookmark_vars() {
     
     # Set new variables
     local count=1
-    while IFS='|' read -r name path && [ $count -le 9 ]; do
-        if [ -n "$path" ]; then
-            eval "g$count=\"$path\""
+    while IFS='|' read -r name bookmark_path && [ $count -le 9 ]; do
+        if [ -n "$bookmark_path" ]; then
+            eval "g$count=\"$bookmark_path\""
             export g$count
         fi
         ((count++))
@@ -289,6 +289,15 @@ if [ -n "$ZSH_VERSION" ]; then
             [ ${#names[@]} -gt 0 ] && compadd -Q -n -a names
         fi
     }
-    compdef _gt gt
-    compdef _gt mkr
+    
+    # Set up completion - handle both cases where compinit may or may not have been called
+    if (( $+functions[compdef] )); then
+        compdef _gt gt
+        compdef _gt mkr
+    else
+        # If compinit hasn't been called yet, set up autoload
+        autoload -U compinit && compinit
+        compdef _gt gt
+        compdef _gt mkr
+    fi
 fi
