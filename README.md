@@ -7,10 +7,10 @@ A lightweight, intuitive directory bookmarking system for bash and zsh that help
 ## Features
 
 - 📌 **Named Bookmarks** - Save directories with memorable names
-- 🔢 **Quick Access** - Use numbers (1-9) or names to jump to bookmarks
+- 🔢 **Numbered Bookmarks** - Quick access with numbers (1-15) for temporary bookmarks
 - 🚀 **Ultra-fast Navigation** - Shortcuts `g1` through `g9` for instant access
 - 📝 **Smart Tab Completion** - **See all bookmarks with paths before jumping**
-- 🔗 **Path Variables** - Access bookmarks 1-9 via `$g1` to `$g9` variables
+- 🔗 **Path Variables** - Access all bookmarks as shell variables (`$g1`-`$g15`, plus named bookmarks)
 - 💾 **Persistent Storage** - Bookmarks survive shell restarts
 - 🎯 **Zero Dependencies** - Pure shell script, no external tools needed
 - 📊 **Clean Formatting** - Formatted output, easy to scan
@@ -120,6 +120,11 @@ Already bookmarked: 3) ~/Projects/my-awesome-project
 echo $g1  # Prints the path of bookmark 1
 cp file.txt $g2/  # Copy file to bookmark 2
 ls -la $g3  # List contents of bookmark 3
+
+# Named bookmarks are also available as variables
+echo $awesome  # Prints the path of the 'awesome' bookmark
+cd $awesome/subdir  # Navigate to subdirectory of named bookmark
+diff $frontend/app.js $backend/server.js  # Compare files across bookmarks
 ```
 
 ## Tips & Tricks
