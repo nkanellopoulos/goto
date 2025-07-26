@@ -1,6 +1,9 @@
 # Directory bookmarking system
 # Source this file in your .bashrc or .zshrc
 
+# Clean up any existing functions before redefining
+unset -f mk gt g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 mkr mkc mkclean ml _update_bookmark_vars _format_bookmark _variable_exists _goto_bookmark_path 2>/dev/null || true
+
 # File to store bookmarks
 GOTO_BOOKMARKS_FILE="${HOME}/.goto_bookmarks"
 
@@ -9,20 +12,81 @@ GOTO_BOOKMARKS_FILE="${HOME}/.goto_bookmarks"
 
 # Function to update bookmark variables
 _update_bookmark_vars() {
-    # Clear existing variables
-    for i in {1..9}; do
-        unset g$i
+    # Clear existing numbered variables
+    for i in {1..15}; do
+        unset g$i 2>/dev/null || true
     done
+    
+    # Clear existing named variables (we'll track them)
+    if [ -n "$_GOTO_NAMED_VARS" ]; then
+        # Split the variable names and unset each one individually
+        echo "$_GOTO_NAMED_VARS" | tr ' ' '\n' | while read -r var; do
+            [ -n "$var" ] && unset "$var" 2>/dev/null || true
+        done
+    fi
+    _GOTO_NAMED_VARS=""
     
     # Set new variables
     local count=1
-    while IFS='|' read -r name bookmark_path && [ $count -le 9 ]; do
+    while IFS='|' read -r name bookmark_path && [ $count -le 15 ]; do
         if [ -n "$bookmark_path" ]; then
-            eval "g$count=\"$bookmark_path\""
-            export g$count
+            # Export numbered variable
+            eval "export g$count=\"$bookmark_path\""
+            
+            # Export named variable if name exists
+            if [ -n "$name" ]; then
+                # Check if this is a variable we created vs an external one
+                local is_our_var=0
+                case " $_GOTO_NAMED_VARS " in
+                    *" $name "*) is_our_var=1 ;;
+                esac
+                
+                if [ $is_our_var -eq 1 ]; then
+                    # This is our variable, always update it
+                    eval "export $name=\"$bookmark_path\""
+                    _GOTO_NAMED_VARS="$_GOTO_NAMED_VARS $name"
+                else
+                    # Check if variable exists and would conflict with external variable
+                    if _variable_exists "$name"; then
+                        echo "Warning: Bookmark '$name' would override existing variable \$$name, skipping named export" >&2
+                    else
+                        # Set and export the variable
+                        eval "export $name=\"$bookmark_path\""
+                        _GOTO_NAMED_VARS="$_GOTO_NAMED_VARS $name"
+                    fi
+                fi
+            fi
         fi
         ((count++))
     done < "$GOTO_BOOKMARKS_FILE"
+}
+
+# Helper function to check if a variable exists in the current shell
+_variable_exists() {
+    local name="$1"
+    if [ -n "$BASH_VERSION" ]; then
+        [ -n "${!name+x}" ]
+    elif [ -n "$ZSH_VERSION" ]; then
+        (( ${+parameters[$name]} ))
+    else
+        false
+    fi
+}
+
+# Helper function to navigate to a bookmark path
+_goto_bookmark_path() {
+    local bookmark_path="$1"
+    local target="$2"
+    
+    if [ -d "$bookmark_path" ]; then
+        cd "$bookmark_path"
+        pwd
+        return 0
+    else
+        echo "Path not found: $bookmark_path"
+        echo "Use 'mkr $target' to remove this bookmark"
+        return 1
+    fi
 }
 
 # Update variables on sourcing
@@ -41,8 +105,14 @@ _format_bookmark() {
     # Format name to be exactly 10 characters (pad or truncate)
     local formatted_name=$(printf "%-10.10s" "$display_name")
     
-    # Return formatted line
-    printf " %2d  %s  %s" "$index" "$formatted_name" "$display_path"
+    # Check if path exists and add indicator
+    local path_status=""
+    if [ ! -d "$path" ]; then
+        path_status=" [missing]"
+    fi
+    
+    # Return formatted line with fixed-width columns
+    printf " %2d  %-12s %-30s%s" "$index" "$formatted_name" "$display_path" "$path_status"
 }
 
 mk() {
@@ -50,23 +120,40 @@ mk() {
     local current_dir=$(pwd)
     
     # Check if this directory is already bookmarked
-    local existing_entry=""
+    local existing_line_num=0
+    local existing_name=""
     local line_num=0
     while IFS='|' read -r bookmark_name bookmark_path; do
         ((line_num++))
         if [ "$bookmark_path" = "$current_dir" ]; then
-            if [ -n "$bookmark_name" ]; then
-                existing_entry="$line_num) $bookmark_name $bookmark_path"
-            else
-                existing_entry="$line_num) $bookmark_path"
-            fi
+            existing_line_num=$line_num
+            existing_name="$bookmark_name"
             break
         fi
     done < "$GOTO_BOOKMARKS_FILE"
     
-    if [ -n "$existing_entry" ]; then
-        echo "Already bookmarked: $existing_entry"
-        return
+    if [ $existing_line_num -gt 0 ]; then
+        # Directory already bookmarked
+        if [ -n "$name" ]; then
+            # Update the existing bookmark with new name
+            local temp_file=$(mktemp)
+            awk -v line="$existing_line_num" -v new_name="$name" -v path="$current_dir" '
+                NR == line { print new_name "|" path; next }
+                { print }
+            ' "$GOTO_BOOKMARKS_FILE" > "$temp_file"
+            \mv "$temp_file" "$GOTO_BOOKMARKS_FILE"
+            echo "✓ Updated bookmark name to '$name'"
+            _update_bookmark_vars
+            return
+        else
+            # No new name provided, just inform about existing bookmark
+            if [ -n "$existing_name" ]; then
+                echo "Already bookmarked: $existing_line_num) $existing_name $current_dir"
+            else
+                echo "Already bookmarked: $existing_line_num) $current_dir"
+            fi
+            return
+        fi
     fi
     
     # If no name provided, just save the path
@@ -76,12 +163,17 @@ mk() {
     else
         # Check if name already exists and update it
         if grep -q "^${name}|" "$GOTO_BOOKMARKS_FILE"; then
-            # Update existing bookmark
+            # Update existing bookmark - remove ALL instances of this name first
             local temp_file=$(mktemp)
+            local old_path=$(grep "^${name}|" "$GOTO_BOOKMARKS_FILE" | head -1 | cut -d'|' -f2)
             grep -v "^${name}|" "$GOTO_BOOKMARKS_FILE" > "$temp_file"
             echo "${name}|${current_dir}" >> "$temp_file"
             \mv "$temp_file" "$GOTO_BOOKMARKS_FILE"
-            echo "✓ Updated '$name'"
+            if [ "$old_path" != "$current_dir" ]; then
+                echo "✓ Updated '$name' (was: $old_path)"
+            else
+                echo "✓ Updated '$name'"
+            fi
         else
             # Add new bookmark
             echo "${name}|${current_dir}" >> "$GOTO_BOOKMARKS_FILE"
@@ -99,6 +191,13 @@ gt() {
     if [ -z "$target" ]; then
         if [ ! -s "$GOTO_BOOKMARKS_FILE" ]; then
             echo "No bookmarks saved."
+            echo ""
+            echo "Commands:"
+            echo "  mk [name]     - bookmark current directory"
+            echo "  gt [n|name]   - go to bookmark (or list all)"
+            echo "  mkr [n|name]  - remove bookmark"
+            echo "  mkc           - clear all bookmarks"
+            echo "  mkclean       - remove non-existing paths"
             return
         fi
         
@@ -108,6 +207,9 @@ gt() {
             echo
             ((index++))
         done < "$GOTO_BOOKMARKS_FILE"
+        
+        echo ""
+        echo "Commands: mk [name] | gt [n|name] | mkr [n|name] | mkc | mkclean"
         return 0
     fi
     
@@ -124,13 +226,7 @@ gt() {
             return 1
         fi
         local bookmark_path=$(echo "$line" | cut -d'|' -f2)
-        if [ -d "$bookmark_path" ]; then
-            cd "$bookmark_path"
-            pwd
-        else
-            echo "Path not found"
-            return 1
-        fi
+        _goto_bookmark_path "$bookmark_path" "$target"
     else
         # Target is a name
         local line=$(grep "^${target}|" "$GOTO_BOOKMARKS_FILE")
@@ -139,13 +235,7 @@ gt() {
             return 1
         fi
         local bookmark_path=$(echo "$line" | cut -d'|' -f2)
-        if [ -d "$bookmark_path" ]; then
-            cd "$bookmark_path"
-            pwd
-        else
-            echo "Path not found"
-            return 1
-        fi
+        _goto_bookmark_path "$bookmark_path" "$target"
     fi
 }
 
@@ -159,6 +249,12 @@ g6() { gt 6; }
 g7() { gt 7; }
 g8() { gt 8; }
 g9() { gt 9; }
+g10() { gt 10; }
+g11() { gt 11; }
+g12() { gt 12; }
+g13() { gt 13; }
+g14() { gt 14; }
+g15() { gt 15; }
 
 # Remove a bookmark by number or name (shortened)
 mkr() {
@@ -201,6 +297,32 @@ mkc() {
     fi
 }
 
+# Clean up stale bookmarks (remove non-existing paths)
+mkclean() {
+    local temp_file=$(mktemp)
+    local removed_count=0
+    local kept_count=0
+    
+    while IFS='|' read -r bookmark_name bookmark_path; do
+        if [ -d "$bookmark_path" ]; then
+            echo "${bookmark_name}|${bookmark_path}" >> "$temp_file"
+            ((kept_count++))
+        else
+            echo "Removing: ${bookmark_name:-[unnamed]} -> $bookmark_path"
+            ((removed_count++))
+        fi
+    done < "$GOTO_BOOKMARKS_FILE"
+    
+    if [ $removed_count -gt 0 ]; then
+        \mv "$temp_file" "$GOTO_BOOKMARKS_FILE"
+        echo "✓ Removed $removed_count stale bookmark(s), kept $kept_count"
+        _update_bookmark_vars
+    else
+        rm "$temp_file"
+        echo "All bookmarks are valid"
+    fi
+}
+
 # Shortcut to list bookmarks
 ml() {
     gt
@@ -208,6 +330,10 @@ ml() {
 
 # Auto-completion for gt (if using bash)
 if [ -n "$BASH_VERSION" ]; then
+    # Remove old completions if they exist
+    complete -r gt 2>/dev/null || true
+    complete -r mkr 2>/dev/null || true
+    
     _gt_completions() {
         local cur="${COMP_WORDS[COMP_CWORD]}"
         local IFS=$'\n'
@@ -264,6 +390,10 @@ fi
 
 # ZSH completion
 if [ -n "$ZSH_VERSION" ]; then
+    # Unregister old completions if they exist
+    compdef -d gt 2>/dev/null || true
+    compdef -d mkr 2>/dev/null || true
+    
     _gt() {
         local goto_file="${HOME}/.goto_bookmarks"
         if [ -f "$goto_file" ]; then
